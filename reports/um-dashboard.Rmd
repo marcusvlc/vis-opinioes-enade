@@ -42,6 +42,14 @@ Abaixo você pode visualizar um gráfico que mostra, a maior média obtida por c
 
 Vale lembrar que, por mais que várias categorias existam, o gráfico mostra apenas 3, pelo simples fato das demais não terem nenhum estado em que sua média se sobressaiu em relação as demais.
 
+
+```{r}
+
+teste = respostas %>% filter(categoria=="Infraestrutura")
+
+```
+
+
 ### Categorias que os estados mais se destacaram (Com pontos de intensidade)
 ```{r}
 maior_media_por_estado %>% ggplot(aes(x=UF, y=categoria, size = media)) + geom_point()

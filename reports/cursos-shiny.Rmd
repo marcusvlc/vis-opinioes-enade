@@ -1,0 +1,82 @@
+---
+title: "Laboratório 2 Parte 2: Análise de opiniões em cursos"
+author: "Marcus Vinicius Leite Costa"
+date: "3 de maio de 2019"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(flexdashboard)
+library(tidyverse)
+library(viridis)
+#library(hrbrthemes)
+#theme_set(theme_ipsum())
+
+respostas = read_csv(here::here("data/enade-ccc-2017.csv"),
+                     col_types = "cccdccdddc")
+
+cursos = respostas %>% 
+    group_by(UF) %>% 
+    summarise(n = n(), 
+              media = mean(media))
+
+criterios = respostas %>% 
+    group_by(UF, categoria) %>% 
+    summarise(media = mean(media))
+
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Categorias que os estados mais se destacaram
+
+Abaixo você pode visualizar um gráfico que mostra, a maior média obtida por cada estado dentre as categorias analisadas, que foram divididas em: Curso em geral, Infraestrutura, Outros, Aprendizagem além do técnico, Ensino, apoio e avaliacão e Outros. Com esse gráfico, podemos perceber qual categoria cada estado mais se destacou.
+
+Vale lembrar que, por mais que várias categorias existam, o gráfico mostra apenas 3, pelo simples fato das demais não terem nenhum estado em que sua média se sobressaiu em relação as demais.
+
+```{r}
+
+maior_media_por_estado = criterios %>% group_by(UF) %>% filter(media == max(media))
+
+maior_media_por_estado %>% ggplot(aes(x=UF, y=media, fill=categoria)) + geom_col()
+
+```
+
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+```{r}
+
+unis = unique(respostas %>% pull(IES))
+
+selectInput("universidades",
+            "Selecione uma universidade",
+            choices = unis)
+```
+ 
+### Melhores categorias em cursos de computação ao longo do Brasil.
+```{r}
+
+renderPlot({
+  
+cc_brasil = respostas %>% filter(str_detect(NOME_CURSO, 'Ciência Da Computação')) 
+
+
+cc_brasil %>% filter(IES == input$universidades) %>% group_by(categoria) %>% 
+    summarise(media = mean(media)) %>% ggplot(aes(x=categoria, y = media)) + geom_col()
+
+})
+
+
+
+```
+
+
+
