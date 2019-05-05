@@ -54,29 +54,25 @@ Column {data-width=650}
 -----------------------------------------------------------------------
 ```{r}
 
-unis = unique(respostas %>% pull(IES))
+states = unique(respostas %>% pull(UF))
 
-selectInput("universidades",
-            "Selecione uma universidade",
-            choices = unis)
+selectInput("estados",
+            "Selecione um Estado",
+            choices = states)
 ```
  
-### Melhores categorias em cursos de computação ao longo do Brasil.
+### Universidades com maiores médias em cada estado.
 ```{r}
 
 renderPlot({
   
-cc_brasil = respostas %>% filter(str_detect(NOME_CURSO, 'Ciência Da Computação')) 
-
-
-cc_brasil %>% filter(IES == input$universidades) %>% group_by(categoria) %>% 
-    summarise(media = mean(media)) %>% ggplot(aes(x=categoria, y = media)) + geom_col()
+respostas %>% filter(UF == input$estados) %>% group_by(IES) %>% summarise(media_geral = mean(media)) %>%  ggplot(aes(x=reorder(IES, -media_geral), y = media_geral, fill=IES)) + geom_col(show.legend = FALSE)
 
 })
 
 
 
 ```
-
+Neste gráfico, podemos analisar ao selecionar um determinado estado, as suas universidades, de modo que, é perceptivel as que mais se destacam no quesito média geral. A média geral nada mais é que a média de todas as notas das categorias em que as universidades foram avalidas.
 
 
