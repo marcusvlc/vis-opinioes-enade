@@ -1,22 +1,19 @@
 ---
-title: "Laboratório 2 Parte 2: Análise de opiniões em cursos"
-author: "Marcus Vinicius Leite Costa"
+title: "L2P2: Análise de opiniões em cursos"
+author: "Marcus Vinicius, Lívia Cavalcanti"
 date: "3 de maio de 2019"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: scroll
+  orientation: rows
 runtime: shiny
+
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
 library(flexdashboard)
 library(tidyverse)
 library(viridis)
-#library(hrbrthemes)
-#theme_set(theme_ipsum())
-
+library(plotly)
 respostas = read_csv(here::here("data/enade-ccc-2017.csv"),
                      col_types = "cccdccdddc")
 
@@ -31,15 +28,50 @@ criterios = respostas %>%
 
 ```
 
-Column {data-width=650}
+Visualização 1 {data-orientation=rows}
+=====================================  
+    
+Row {.tabset .tabset-fade}
+-------------------------------------
+### Sobre a visualização
+Pontos que impactam diretamente a formação dos estudantes foram, por considerável parte deles, criticados. Entre oscinco piores, quatro são sobre o estímulo do aprendizado a partir do professor e práticas complementares à profissão. A falta de troca de conhecimento com o corpo docente e instituições internacionais podam o desenvolvimento de muitos estudante. Enquanto que a escassez de oportunidades profissionais, ainda quando estudante, dificultam o acesso ao mercado de trabalho, posteriormente. Além da privação técnica e acadêmica, os estudantes também não têm acesso à formação cultural e social no ambiente do ensino superior como se poderia esperar. Abaixo, temos as vinte perguntas que foram avaliadas, proporcionalmente pela quantidade de estudantes, com as piores médias. Como a média pode mascarar a distribuição dos dados, em cada ponto pode-se ver as instituições com pior desempenho, para cada pergunta.
+
+### Visualização
+```{r}
+total_concluintes <- respostas %>% 
+  mutate(ponderando_pergunta = n*media) %>%
+    group_by(enunciado) %>%
+    summarize(concluintes=sum(n), media_pergunta=sum(ponderando_pergunta)/concluintes) %>%
+  slice(1:20)
+
+menor_media = respostas %>% 
+    group_by(enunciado) %>%
+    filter(media == min(media)) 
+
+ggplotly(merge(total_concluintes, menor_media, by = "enunciado") %>%
+  ggplot(aes(x=media_pergunta, y=reorder(enunciado, -media_pergunta), color = media_pergunta)) +
+    geom_point(aes(text=sprintf("Instituição com menor média: %s<br>Média: %.3f", IES, media)), size=5) +
+      scale_colour_distiller(palette = "BuPu") + 
+      labs( x = "Média", color = "Média", title="O que foi reclamado por mais estudantes?") + 
+        theme(axis.title.y = element_blank(), 
+              panel.background = element_rect(fill = "#e3cfd3", colour = "darkblue")) , 
+  tooltip="text") 
+  
+```
+
+Visualização 2 {data-orientation=rows}
+=====================================
+
+Row {.tabset .tabset-fade}
 -----------------------------------------------------------------------
 
-### Categorias que os estados mais se destacaram
+### Sobre a visualização
 
-Abaixo você pode visualizar um gráfico que mostra, a maior média obtida por cada estado dentre as categorias analisadas, que foram divididas em: Curso em geral, Infraestrutura, Outros, Aprendizagem além do técnico, Ensino, apoio e avaliacão e Outros. Com esse gráfico, podemos perceber qual categoria cada estado mais se destacou.
+Nesta sessão você pode visualizar um gráfico que mostra, a maior média obtida por cada estado dentre as categorias analisadas, que foram divididas em: Curso em geral, Infraestrutura, Outros, Aprendizagem além do técnico, Ensino, apoio e avaliacão e Outros. Com esse gráfico, podemos perceber qual categoria cada estado mais se destacou.
 
 Vale lembrar que, por mais que várias categorias existam, o gráfico mostra apenas 3, pelo simples fato das demais não terem nenhum estado em que sua média se sobressaiu em relação as demais.
 
+### Visualização
 ```{r}
 
 maior_media_por_estado = criterios %>% group_by(UF) %>% filter(media == max(media))
@@ -48,10 +80,28 @@ maior_media_por_estado %>% ggplot(aes(x=UF, y=media, fill=categoria)) + geom_col
 
 ```
 
+Visualização 3 {data-orientation=rows}
+=====================================
+
+Row {data-height=650}
+-------------------------------------
+### Visualização 
+```{r}
+
+renderPlot({
+  
+respostas %>% filter(UF == input$estados) %>% group_by(IES) %>% summarise(media_geral = mean(media)) %>%  ggplot(aes(x=reorder(IES, -media_geral), y = media_geral, fill=IES)) + geom_col(show.legend = FALSE) + labs(x='Universidades', y = 'Média geral')
+
+})
 
 
-Column {data-width=650}
------------------------------------------------------------------------
+
+```
+
+Row
+-------------------------------------
+
+### Altere o estado para mudar a visualização
 ```{r}
 
 states = unique(respostas %>% pull(UF))
@@ -60,19 +110,7 @@ selectInput("estados",
             "Selecione um Estado",
             choices = states)
 ```
- 
-### Universidades com maiores médias em cada estado.
-```{r}
 
-renderPlot({
-  
-respostas %>% filter(UF == input$estados) %>% group_by(IES) %>% summarise(media_geral = mean(media)) %>%  ggplot(aes(x=reorder(IES, -media_geral), y = media_geral, fill=IES)) + geom_col(show.legend = FALSE)
+### Sobre a visualização
 
-})
-
-
-
-```
-Neste gráfico, podemos analisar ao selecionar um determinado estado, as suas universidades, de modo que, é perceptivel as que mais se destacam no quesito média geral. A média geral nada mais é que a média de todas as notas das categorias em que as universidades foram avalidas.
-
-
+Nesta sessão, podemos analisar ao selecionar um determinado estado, as suas universidades, de modo que, é perceptivel as que mais se destacam no quesito média geral. A média geral nada mais é que a média de todas as notas das categorias em que as universidades foram avalidas.
